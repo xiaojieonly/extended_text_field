@@ -246,7 +246,8 @@ class ExtendedTextField extends StatefulWidget {
     this.scribbleEnabled = true,
     this.enableIMEPersonalizedLearning = true,
     this.shouldShowSelectionHandles,
-    this.textSelectionGestureDetectorBuilder, this.onShowKeyBoard,
+    this.textSelectionGestureDetectorBuilder,
+    this.onShowKeyBoard,
   })  : assert(textAlign != null),
         assert(readOnly != null),
         assert(autofocus != null),
@@ -810,10 +811,12 @@ class ExtendedTextFieldState extends State<ExtendedTextField>
         ExtendedTextSelectionGestureDetectorBuilderDelegate,
         AutofillClient {
   RestorableTextEditingController? _controller;
+
   TextEditingController get _effectiveController =>
       widget.controller ?? _controller!.value;
 
   FocusNode? _focusNode;
+
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_focusNode ??= FocusNode());
 
@@ -845,17 +848,21 @@ class ExtendedTextFieldState extends State<ExtendedTextField>
 
   @override
   bool get selectionEnabled => widget.selectionEnabled;
+
   // End of API for TextSelectionGestureDetectorBuilderDelegate.
 
   bool get _isEnabled => widget.enabled ?? widget.decoration?.enabled ?? true;
 
   int get _currentLength => _effectiveController.value.text.characters.length;
+
   bool get _hasIntrinsicError =>
       widget.maxLength != null &&
       widget.maxLength! > 0 &&
       _effectiveController.value.text.characters.length > widget.maxLength!;
+
   bool get _hasError =>
       widget.decoration?.errorText != null || _hasIntrinsicError;
+
   InputDecoration _getEffectiveDecoration() {
     final MaterialLocalizations localizations =
         MaterialLocalizations.of(context);
@@ -1165,6 +1172,7 @@ class ExtendedTextFieldState extends State<ExtendedTextField>
     return _editableText!.textInputConfiguration
         .copyWith(autofillConfiguration: autofillConfiguration);
   }
+
   // AutofillClient implementation end.
 
   @override
@@ -1336,7 +1344,8 @@ class ExtendedTextFieldState extends State<ExtendedTextField>
           onSelectionHandleTapped: _handleSelectionHandleTapped,
           inputFormatters: formatters,
           rendererIgnoresPointer: true,
-          mouseCursor: MouseCursor.defer, // TextField will handle the cursor
+          mouseCursor: MouseCursor.defer,
+          // TextField will handle the cursor
           cursorWidth: widget.cursorWidth,
           cursorHeight: widget.cursorHeight,
           cursorRadius: cursorRadius,
