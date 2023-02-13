@@ -13,3 +13,4 @@ example/ios/Flutter/flutter_export_environment.sh
 pubspec.lock
 example/pubspec.lock
 example/.flutter-plugins-dependencies
+/.idea/
