@@ -19,6 +19,10 @@
     - [缓存图片](#缓存图片)
   - [文本选择控制器](#文本选择控制器)
   - [WidgetSpan](#widgetspan)
+  - [阻止系统键盘](#阻止系统键盘)
+    - [TextInputBindingMixin](#textinputbindingmixin)
+    - [TextInputFocusNode](#textinputfocusnode)
+    - [CustomKeyboard](#customkeyboard)
   - [☕️Buy me a coffee](#️buy-me-a-coffee)
 
 ## 限制
@@ -510,6 +514,140 @@ class EmailText extends SpecialText {
   }
 }
 ```
+
+## 阻止系统键盘
+
+我们不需要代码侵入到 [ExtendedTextField] 或者 [TextField] 当中， 就可以阻止系统键盘弹出，
+
+### TextInputBindingMixin
+
+我们通过阻止 Flutter Framework 发送 `TextInput.show` 到 Flutter 引擎来阻止系统键盘弹出
+
+你可以直接使用 [TextInputBinding].
+
+``` dart
+void main() {
+  TextInputBinding();
+  runApp(const MyApp());
+}
+```
+
+或者你如果有其他的 `binding`，你可以这样。
+
+``` dart
+ class YourBinding extends WidgetsFlutterBinding with TextInputBindingMixin,YourBindingMixin {
+ }
+
+ void main() {
+   YourBinding();
+   runApp(const MyApp());
+ }
+```
+
+或者你需要重载 `ignoreTextInputShow` 方法，你可以这样。
+
+``` dart
+ class YourBinding extends TextInputBinding {
+   @override
+   // ignore: unnecessary_overrides
+   bool ignoreTextInputShow() {
+     // you can override it base on your case
+     // if NoKeyboardFocusNode is not enough
+     return super.ignoreTextInputShow();
+   }
+ }
+
+ void main() {
+   YourBinding();
+   runApp(const MyApp());
+ }
+```
+
+### TextInputFocusNode
+
+把 [TextInputFocusNode]  传递给 [ExtendedTextField] 或者 [TextField]。
+
+
+``` dart
+final TextInputFocusNode _focusNode = TextInputFocusNode();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExtendedTextField(
+      // request keyboard if need
+      focusNode: _focusNode..debugLabel = 'ExtendedTextField',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      // request keyboard if need
+      focusNode: _focusNode..debugLabel = 'CustomTextField',
+    );
+  }
+```
+
+我们通过当前的 `FocusNode` 是否是 [TextInputFocusNode],来决定是否阻止系统键盘弹出的。
+
+``` dart
+  final FocusNode? focus = FocusManager.instance.primaryFocus;
+  if (focus != null &&
+      focus is TextInputFocusNode &&
+      focus.ignoreSystemKeyboardShow) {
+    return true;
+  }
+```
+### CustomKeyboard
+
+你可以通过当前焦点的变化的时候，来显示或者隐藏自定义的键盘。
+
+当你的自定义键盘可以关闭而不让焦点失去，你应该在 [ExtendedTextField] 或者 [TextField]
+的 `onTap` 事件中，再次判断键盘是否显示。
+
+``` dart
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  void _onTextFiledTap() {
+    if (_bottomSheetController == null) {
+      _handleFocusChanged();
+    }
+  }
+
+  void _handleFocusChanged() {
+    if (_focusNode.hasFocus) {
+      // just demo, you can define your custom keyboard as you want
+      _bottomSheetController = showBottomSheet<void>(
+          context: FocusManager.instance.primaryFocus!.context!,
+          // set false, if don't want to drag to close custom keyboard
+          enableDrag: true,
+          builder: (BuildContext b) {
+            // your custom keyboard
+            return Container();
+          });
+      // maybe drag close
+      _bottomSheetController?.closed.whenComplete(() {
+        _bottomSheetController = null;
+      });
+    } else {
+      _bottomSheetController?.close();
+      _bottomSheetController = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChanged);
+    super.dispose();
+  }
+```
+
+
+查看 [完整的例子](https://github.com/fluttercandies/extended_text_field/tree/master/example/lib/pages/simple/no_keyboard.dart)
 
 ## ☕️Buy me a coffee
 

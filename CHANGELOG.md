@@ -1,3 +1,12 @@
+# 11.0.0
+
+* Migrate to 3.7.0
+
+# 10.2.0
+
+* Add TextInputBindingMixin to prevent system keyboard show.
+* Add No SystemKeyboard demo
+
 # 10.1.1
 
 * Fix issue selection not right #172

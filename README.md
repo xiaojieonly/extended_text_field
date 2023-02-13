@@ -18,6 +18,9 @@ Extended official text field to build special text like inline image, @somebody,
     - [Cache Image](#cache-image)
   - [TextSelectionControls](#textselectioncontrols)
   - [WidgetSpan](#widgetspan)
+  - [NoSystemKeyboard](#nosystemkeyboard)
+    - [TextInputBindingMixin](#textinputbindingmixin)
+    - [TextInputFocusNode](#textinputfocusnode)
 
 ## Limitation
 
@@ -504,5 +507,135 @@ class EmailText extends SpecialText {
 }
 ```
 
+## NoSystemKeyboard
+
+support to prevent system keyboard show without any code intrusion for [ExtendedTextField] or [TextField].
+
+### TextInputBindingMixin
+
+we prevent system keyboard show by stop Flutter Framework send `TextInput.show` message to Flutter Engine.
+
+you can use [TextInputBinding] directly.
+
+``` dart
+void main() {
+  TextInputBinding();
+  runApp(const MyApp());
+}
+```
+
+or if you have other `binding` you can do as following.
+
+``` dart
+ class YourBinding extends WidgetsFlutterBinding with TextInputBindingMixin,YourBindingMixin {
+ }
+
+ void main() {
+   YourBinding();
+   runApp(const MyApp());
+ }
+```
+
+or you need to override `ignoreTextInputShow`, you can do as following.
+
+``` dart
+ class YourBinding extends TextInputBinding {
+   @override
+   // ignore: unnecessary_overrides
+   bool ignoreTextInputShow() {
+     // you can override it base on your case
+     // if NoKeyboardFocusNode is not enough
+     return super.ignoreTextInputShow();
+   }
+ }
+
+ void main() {
+   YourBinding();
+   runApp(const MyApp());
+ }
+```
+
+### TextInputFocusNode
+
+you should pass the [TextInputFocusNode] into [ExtendedTextField] or [TextField].
+
+``` dart
+final TextInputFocusNode _focusNode = TextInputFocusNode();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExtendedTextField(
+      // request keyboard if need
+      focusNode: _focusNode..debugLabel = 'ExtendedTextField',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      // request keyboard if need
+      focusNode: _focusNode..debugLabel = 'CustomTextField',
+    );
+  }
+```
+
+we prevent system keyboard show base on current focus is [TextInputFocusNode] and `ignoreSystemKeyboardShow` is true。
+
+``` dart
+  final FocusNode? focus = FocusManager.instance.primaryFocus;
+  if (focus != null &&
+      focus is TextInputFocusNode &&
+      focus.ignoreSystemKeyboardShow) {
+    return true;
+  }
+
+### CustomKeyboard
+
+show/hide your custom keyboard on [TextInputFocusNode] focus is changed.
+
+if your custom keyboard can be close without unFocus, you need also handle 
+show custom keyboard when [ExtendedTextField] or [TextField] `onTap`.
+
+``` dart
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  void _onTextFiledTap() {
+    if (_bottomSheetController == null) {
+      _handleFocusChanged();
+    }
+  }
+
+  void _handleFocusChanged() {
+    if (_focusNode.hasFocus) {
+      // just demo, you can define your custom keyboard as you want
+      _bottomSheetController = showBottomSheet<void>(
+          context: FocusManager.instance.primaryFocus!.context!,
+          // set false, if don't want to drag to close custom keyboard
+          enableDrag: true,
+          builder: (BuildContext b) {
+            // your custom keyboard
+            return Container();
+          });
+      // maybe drag close
+      _bottomSheetController?.closed.whenComplete(() {
+        _bottomSheetController = null;
+      });
+    } else {
+      _bottomSheetController?.close();
+      _bottomSheetController = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChanged);
+    super.dispose();
+  }
+```
 
 
+see [Full Demo](https://github.com/fluttercandies/extended_text_field/tree/master/example/lib/pages/simple/no_keyboard.dart)
