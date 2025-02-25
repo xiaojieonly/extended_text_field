@@ -32,6 +32,7 @@ const List<String> kDefaultContentInsertionMimeTypes = <String>[
 class _CompositionCallback extends SingleChildRenderObjectWidget {
   const _CompositionCallback(
       {required this.compositeCallback, required this.enabled, super.child});
+
   final CompositionCallback compositeCallback;
   final bool enabled;
 
@@ -58,6 +59,7 @@ class _RenderCompositionCallback extends RenderProxyBox {
 
   bool get enabled => _enabled;
   bool _enabled = false;
+
   set enabled(bool newValue) {
     _enabled = newValue;
     if (!newValue) {
@@ -80,6 +82,7 @@ class _RenderCompositionCallback extends RenderProxyBox {
 // A time-value pair that represents a key frame in an animation.
 class _KeyFrame {
   const _KeyFrame(this.time, this.value);
+
   // Values extracted from iOS 15.4 UIKit.
   static const List<_KeyFrame> iOSBlinkingCaretKeyFrames = <_KeyFrame>[
     _KeyFrame(0, 1), // 0
@@ -103,6 +106,7 @@ class _KeyFrame {
 class _DiscreteKeyFrameSimulation extends Simulation {
   _DiscreteKeyFrameSimulation.iOSBlinkingCaret()
       : this._(_KeyFrame.iOSBlinkingCaretKeyFrames, 1);
+
   _DiscreteKeyFrameSimulation._(this._keyFrames, this.maxDuration)
       : assert(_keyFrames.isNotEmpty),
         assert(_keyFrames.last.time <= maxDuration),
@@ -470,6 +474,7 @@ class _EditableText extends StatefulWidget {
     this.spellCheckConfiguration,
     this.magnifierConfiguration = TextMagnifierConfiguration.disabled,
     this.undoController,
+    this.onShowKeyBoard,
   })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ??
             (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
@@ -1541,6 +1546,12 @@ class _EditableText extends StatefulWidget {
   /// {@macro flutter.widgets.magnifier.intro}
   final TextMagnifierConfiguration magnifierConfiguration;
 
+  /// Called when waking up the keyboard to determine whether to wake up the keyboard.
+  /// When the method is null or the return value is true, the keyboard will be
+  /// called out, and when the return value is false, the show keyboard will be
+  /// abandoned.
+  final ValueGetter<bool>? onShowKeyBoard;
+
   bool get _userSelectionEnabled =>
       enableInteractiveSelection && (!readOnly || !obscureText);
 
@@ -1883,6 +1894,7 @@ class _EditableTextState extends State<_EditableText>
         TextInputClient
     implements AutofillClient {
   Timer? _cursorTimer;
+
   AnimationController get _cursorBlinkOpacityController {
     return _backingCursorBlinkOpacityController ??= AnimationController(
       vsync: this,
@@ -1914,6 +1926,7 @@ class _EditableTextState extends State<_EditableText>
       kIsWeb ? null : LiveTextInputStatusNotifier();
 
   TextInputConnection? _textInputConnection;
+
   bool get _hasInputConnection => _textInputConnection?.attached ?? false;
 
   /// zmtzawqlp
@@ -1929,6 +1942,7 @@ class _EditableTextState extends State<_EditableText>
 
   final GlobalKey _scrollableKey = GlobalKey();
   ScrollController? _internalScrollController;
+
   ScrollController get _scrollController =>
       widget.scrollController ??
       (_internalScrollController ??= ScrollController());
@@ -1940,6 +1954,7 @@ class _EditableTextState extends State<_EditableText>
   bool _didAutoFocus = false;
 
   AutofillGroupState? _currentAutofillScope;
+
   @override
   AutofillScope? get currentAutofillScope => _currentAutofillScope;
 
@@ -3289,11 +3304,13 @@ class _EditableTextState extends State<_EditableText>
   }
 
   TextEditingValue get _value => widget.controller.value;
+
   set _value(TextEditingValue value) {
     widget.controller.value = value;
   }
 
   bool get _hasFocus => widget.focusNode.hasFocus;
+
   bool get _isMultiline => widget.maxLines != 1;
 
   // Finds the closest scroll offset to the current scroll offset that fully
@@ -3389,8 +3406,8 @@ class _EditableTextState extends State<_EditableText>
           textDirection: _textDirection,
           textAlign: widget.textAlign,
         )
-        ..setEditingState(localValue)
-        ..show();
+        ..setEditingState(localValue);
+      _showKeyboard();
       if (_needsAutofill) {
         // Request autofill AFTER the size and the transform have been sent to
         // the platform text input plugin.
@@ -3398,6 +3415,12 @@ class _EditableTextState extends State<_EditableText>
       }
       _lastKnownRemoteTextEditingValue = localValue;
     } else {
+      _showKeyboard();
+    }
+  }
+
+  void _showKeyboard() {
+    if (widget.onShowKeyBoard == null || widget.onShowKeyBoard!()) {
       _textInputConnection!.show();
     }
   }
@@ -3422,6 +3445,7 @@ class _EditableTextState extends State<_EditableText>
   }
 
   bool _restartConnectionScheduled = false;
+
   void _scheduleRestartConnection() {
     if (_restartConnectionScheduled) {
       return;
@@ -3607,6 +3631,7 @@ class _EditableTextState extends State<_EditableText>
   }
 
   bool _showToolbarOnScreenScheduled = false;
+
   void _handleContextMenuOnScroll(ScrollNotification notification) {
     if (_webContextMenuEnabled) {
       return;
@@ -4172,7 +4197,9 @@ class _EditableTextState extends State<_EditableText>
     _updateOrDisposeSelectionOverlayIfNeeded();
     // TODO(abarth): Teach RenderEditable about ValueNotifier<TextEditingValue>
     // to avoid this setState().
-    setState(() {/* We use widget.controller.value in build(). */});
+    setState(() {
+      /* We use widget.controller.value in build(). */
+    });
     _verticalSelectionUpdateAction.stopCurrentVerticalRunIfSelectionChanges();
   }
 
@@ -4767,12 +4794,16 @@ class _EditableTextState extends State<_EditableText>
   TextBoundary _characterBoundary() => widget.obscureText
       ? _CodePointBoundary(_value.text)
       : CharacterBoundary(_value.text);
+
   TextBoundary _nextWordBoundary() => widget.obscureText
       ? _documentBoundary()
       : renderEditable.wordBoundaries.moveByWordBoundary;
+
   TextBoundary _linebreak() =>
       widget.obscureText ? _documentBoundary() : LineBoundary(renderEditable);
+
   TextBoundary _paragraphBoundary() => ParagraphBoundary(_value.text);
+
   TextBoundary _documentBoundary() => DocumentBoundary(_value.text);
 
   Action<T> _makeOverridable<T extends Intent>(Action<T> defaultAction) {

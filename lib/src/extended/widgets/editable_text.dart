@@ -94,6 +94,7 @@ class ExtendedEditableText extends _EditableText {
     super.magnifierConfiguration = TextMagnifierConfiguration.disabled,
     super.undoController,
     this.specialTextSpanBuilder,
+    super.onShowKeyBoard,
   });
 
   /// build your ccustom text span

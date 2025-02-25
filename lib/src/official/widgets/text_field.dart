@@ -1660,7 +1660,7 @@ class _TextFieldState extends State<_TextField>
           spellCheckConfiguration: spellCheckConfiguration,
           magnifierConfiguration: widget.magnifierConfiguration ??
               TextMagnifier.adaptiveMagnifierConfiguration,
-          onShowKeyBoard: widget.onShowKeyBoard,
+          // onShowKeyBoard: widget.onShowKeyBoard,
         ),
       ),
     );
