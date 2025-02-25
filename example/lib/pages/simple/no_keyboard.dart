@@ -1,11 +1,11 @@
-import 'dart:ui' as ui;
+import 'package:extended_keyboard/extended_keyboard.dart';
 import 'package:extended_text_field/extended_text_field.dart';
 import 'package:ff_annotation_route_library/ff_annotation_route_library.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
 
-class CustomKeyboarBinding extends TextInputBinding {
+class CustomKeyboarBinding extends TextInputBinding with KeyboardBindingMixin {
   @override
   // ignore: unnecessary_overrides
   bool ignoreTextInputShow() {
@@ -38,9 +38,9 @@ class NoSystemKeyboardDemo extends StatelessWidget {
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
         },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(children: const <Widget>[
+        child: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Column(children: <Widget>[
             Text('ExtendedTextField'),
             ExtendedTextFieldCase(),
             Text('CustomTextField'),
@@ -102,7 +102,7 @@ class TextFieldCaseState extends State<TextFieldCase>
 mixin CustomKeyboardShowStateMixin<T extends StatefulWidget> on State<T> {
   final TextInputFocusNode _focusNode = TextInputFocusNode();
   final TextEditingController _controller = TextEditingController();
-  PersistentBottomSheetController<void>? _bottomSheetController;
+  PersistentBottomSheetController? _bottomSheetController;
 
   final List<TextInputFormatter> _inputFormatters = <TextInputFormatter>[
     // digit or decimal
@@ -130,11 +130,13 @@ mixin CustomKeyboardShowStateMixin<T extends StatefulWidget> on State<T> {
   void _handleFocusChanged() {
     if (_focusNode.hasFocus) {
       // just demo, you can define your custom keyboard as you want
-      _bottomSheetController = showBottomSheet<void>(
+      _bottomSheetController = showBottomSheet(
           context: FocusManager.instance.primaryFocus!.context!,
           // set false, if don't want to drag to close custom keyboard
           enableDrag: true,
           builder: (BuildContext b) {
+            final MediaQueryData mediaQueryData = MediaQuery.of(b);
+
             return Material(
               //shadowColor: Colors.grey,
               color: Colors.grey.withOpacity(0.3),
@@ -144,8 +146,8 @@ mixin CustomKeyboardShowStateMixin<T extends StatefulWidget> on State<T> {
                   left: 10,
                   right: 10,
                   top: 20,
-                  bottom:
-                      ui.window.viewPadding.bottom / ui.window.devicePixelRatio,
+                  bottom: mediaQueryData.viewPadding.bottom /
+                      mediaQueryData.devicePixelRatio,
                 ),
                 child: IntrinsicHeight(
                   child: Row(
